@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"io/ioutil"
@@ -14,17 +13,9 @@ import (
 	"time"
 )
 
-var (
-	Token string
-)
-
-func init() {
-	flag.StringVar(&Token, "t", "", "Bot Token")
-	flag.Parse()
-}
-
 func main() {
-	dg, err := discordgo.New("Bot " + Token)
+	token, _ := os.LookupEnv("BOT_TOKEN")
+	dg, err := discordgo.New("Bot " + token)
 	if err != nil {
 		fmt.Println("error creating Discord session,", err)
 		return
