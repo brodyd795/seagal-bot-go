@@ -1,10 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"io/ioutil"
 	"math/rand"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -98,6 +101,40 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		randomQuote := movieQuotes[rand.Intn(len(movieQuotes))]
 
 		_, err := s.ChannelMessageSend(m.ChannelID, randomQuote)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
+	type Analytics struct {
+		EmbedUrl string `json:"embed_url"`
+	}
+
+	type GiphyResp struct {
+		Data []Analytics `json:"data"`
+	}
+
+	if m.Content == "/seagal-gif" {
+		giphyApiKey, _ := os.LookupEnv("GIPHY_API_KEY")
+
+		resp, err := http.Get(fmt.Sprintf("https://api.giphy.com/v1/gifs/search?api_key=%s&q=steven+seagal&limit=10&offset=0&lang=en", giphyApiKey))
+
+		defer resp.Body.Close()
+
+		body, err := ioutil.ReadAll(resp.Body)
+
+		if err != nil {
+			fmt.Println(err)
+		}
+		var result GiphyResp
+		// why is a new json decoder a worse way than unmarshalling?
+		json.Unmarshal(body, &result)
+
+		gif := result.Data[rand.Intn(len(result.Data))]
+		fmt.Println(gif.EmbedUrl)
+
+		_, err = s.ChannelMessageSend(m.ChannelID, gif.EmbedUrl)
+
 		if err != nil {
 			fmt.Println(err)
 		}
